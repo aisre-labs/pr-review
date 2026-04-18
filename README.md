@@ -40,6 +40,8 @@ That's it. No servers to operate, no data leaving your Azure tenant.
 - **`#best-practice` shortcut** — tag any comment to immediately create a rule, without waiting for the AI to classify it
 - **Project groups** — one rule can apply across a set of related repositories (e.g. all payment-service repos)
 - **Three review modes** — full AI review, rule-based only, or disabled — choose per pipeline
+- **Three learning modes** — tagged-only (compliance), conversation (balanced), all (maximum recall)
+- **Rule provenance & audit log** — every rule shows its source PR comments and full change history
 - **Your data, your tenant** — BYOK Azure OpenAI, storage in ADO Extension Data Service, zero external dependencies
 - **Free** — you pay only for your own Azure OpenAI token usage (~$5–50 / month typical)
 
@@ -246,6 +248,40 @@ The AI picks the **narrowest** scope that fits each rule:
 | `LANGUAGE` | Any file of that language | `java`, `typescript` |
 
 You can edit any rule's scope later in the **Learned Rules** tab if AI classified it too narrow or too broad.
+
+---
+
+## Enterprise governance — learning mode, provenance, audit log
+
+### Learning mode — control which comments become rules
+
+Set in **Project Settings → AI Code Reviewer → Azure OpenAI → Learning mode**. Three strictness levels:
+
+| Mode | What becomes a rule | Recommended for |
+|---|---|---|
+| **Tagged-only** | Only comments explicitly tagged `#best-practice` | Enterprise, compliance — zero AI guessing |
+| **Conversation** | Tagged + threads where reviewer and dev actually discussed | Mid-market — balanced |
+| **All** *(default)* | Tagged + conversation + diff-heuristic for silent threads | Small teams — maximum recall |
+
+For enterprise, use **Tagged-only** — every rule then has an explicit, human-authorized origin.
+
+### Rule provenance — click Details to see source PRs
+
+Every rule in **Learned Rules** tab has a **Details** button. Expanding shows:
+
+- **Provenance** — the exact PR comments that created or reinforced this rule (reviewer, date, file path, link to PR)
+- **Audit log** — chronological history of every change to this rule
+
+### Audit log — who changed what
+
+Every state change is recorded:
+
+- **Actor** — `system:ingest (PR #42)` or `user:<display name>`
+- **Action** — created / merged / confidence_changed / active_toggled / edited / deleted
+- **Before/after** — only changed fields (compact footprint)
+- **Note** — human-readable description
+
+Stored sharded (~100 events per document) in Extension Data Service. Zero external infrastructure.
 
 ---
 
