@@ -222,6 +222,18 @@ By default, a rule learned in one repository applies **only to that repository**
 
 From the next ingest run onwards, the AI classifier sees your groups and can scope a rule to a group instead of just one repo. Add a new repo to the group later → all group-scoped rules apply to it automatically, no re-ingest needed.
 
+### ⚠ Pipelines are still per-repo
+
+A project group shares **rules** across repos, not pipelines. Each repo in the group still needs:
+
+- Its own `ai-review-pipeline.yml` in the repo root
+- Its own pipeline registration in ADO (one-time, via *New pipeline* wizard)
+- Its own Branch Policy → Build Validation set on `main`
+
+Same for ingest — each repo needs its own `ai-ingest-pipeline.yml` to run ingest on a merged PR from that repo. The group controls how rules **match**; the pipelines control where reviews **run**.
+
+A practical setup for a 3-repo group: 6 pipelines total (review + ingest × 3 repos), all sharing the same learned rules store via the extension's per-organization data service.
+
 ### Scope hierarchy
 
 The AI picks the **narrowest** scope that fits each rule:
