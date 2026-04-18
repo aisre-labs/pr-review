@@ -1,0 +1,15 @@
+title: "AI PR Review"
+description: "AI-powered pull request review that learns from your team's own standards — Azure DevOps extension by AISRE Labs."
+url: "https://aisre-labs.github.io"
+baseurl: "/pr-review"
+
+theme: minima
+
+plugins:
+  - jekyll-seo-tag
+
+author:
+  name: AISRE Labs
+  email: privacy@aisre.dev
+
+show_excerpts: true

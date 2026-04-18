@@ -1,0 +1,68 @@
+PROPRIETARY SOFTWARE LICENSE
+
+Copyright (c) 2026 AISRE. All rights reserved.
+
+DEFINITIONS
+
+"Software" means the AI PR Review + Rule Learning extension, including all source code,
+compiled artifacts, AI prompts, algorithms, documentation, and associated materials.
+
+"Use" means installing, running, and operating the Software within your Azure DevOps
+organization(s) solely for your internal business purposes.
+
+GRANT OF LICENSE
+
+Subject to the terms of this License, AISRE grants you a limited, non-exclusive,
+non-transferable, revocable right to Use the Software in the free tier as made
+available through the Visual Studio Marketplace.
+
+RESTRICTIONS
+
+You may NOT, without prior written permission from AISRE:
+
+1. Copy, modify, merge, adapt, translate, or create derivative works of the Software.
+2. Distribute, sublicense, sell, resell, transfer, assign, or otherwise provide
+   the Software or any portion thereof to any third party.
+3. Reverse engineer, decompile, disassemble, or attempt to derive the source code
+   of the Software (except to the extent permitted by applicable law).
+4. Remove or alter any proprietary notices, labels, or marks on the Software.
+5. Use the Software to build a competing product or service.
+6. Extract, reproduce, or redistribute the AI prompts contained within the Software;
+   these prompts constitute proprietary intellectual property of AISRE.
+
+COMMERCIAL TIERS
+
+A commercial paid tier may be introduced in the future. Continued use of the Software
+under such a commercial tier will require a separate paid license agreement. AISRE
+reserves the right to modify the terms of free-tier availability at any time with
+reasonable notice.
+
+INTELLECTUAL PROPERTY
+
+The Software, including all AI prompts, rule extraction algorithms, and scoring logic,
+is and remains the exclusive property of AISRE. This License does not convey any
+ownership interest in the Software.
+
+DISCLAIMER OF WARRANTIES
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+INCLUDING BUT NOT LIMITED TO WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+PURPOSE, AND NON-INFRINGEMENT. YOUR USE OF THE SOFTWARE IS AT YOUR SOLE RISK.
+
+LIMITATION OF LIABILITY
+
+IN NO EVENT SHALL AISRE BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+OR CONSEQUENTIAL DAMAGES (INCLUDING LOSS OF PROFITS, DATA, OR BUSINESS INTERRUPTION)
+ARISING OUT OF OR RELATED TO YOUR USE OF OR INABILITY TO USE THE SOFTWARE, EVEN IF
+ADVISED OF THE POSSIBILITY OF SUCH DAMAGES. AISRE'S TOTAL LIABILITY SHALL NOT EXCEED
+THE AMOUNTS PAID BY YOU FOR THE SOFTWARE IN THE TWELVE MONTHS PRECEDING THE CLAIM.
+
+GOVERNING LAW
+
+This License is governed by the laws of Poland, without regard to conflict-of-law
+principles. Any disputes shall be resolved in the competent courts of Poland.
+
+CONTACT
+
+For licensing inquiries, commercial agreements, or permissions beyond the scope of
+this License, contact: license@aisre.dev
