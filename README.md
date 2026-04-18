@@ -4,6 +4,10 @@
 
 **AI PR Review** is a free Azure DevOps extension that automatically reviews every pull request using patterns your team already established. It reads resolved PR comments from past merges, extracts the rules your reviewers actually enforced, and applies them to every new PR — inline, like a human reviewer.
 
+📦 **Install from Marketplace:** [marketplace.visualstudio.com/items?itemName=AISRE.pr-review](https://marketplace.visualstudio.com/items?itemName=AISRE.pr-review)
+
+![AI review comments inline on a pull request](docs/screenshots/01-ai-comments-on-pr.png)
+
 ---
 
 ## How it works
@@ -35,9 +39,11 @@ That's it. No servers to operate, no data leaving your Azure tenant.
 - **Learns from your history** — rules come from your team's own resolved comments, not internet opinions
 - **`#best-practice` shortcut** — tag any comment to immediately create a rule, without waiting for the AI to classify it
 - **Project groups** — one rule can apply across a set of related repositories (e.g. all payment-service repos)
-- **Four review modes** — full AI review, rule-based only, list-only, or disabled — choose per pipeline
+- **Three review modes** — full AI review, rule-based only, or disabled — choose per pipeline
 - **Your data, your tenant** — BYOK Azure OpenAI, storage in ADO Extension Data Service, zero external dependencies
 - **Free** — you pay only for your own Azure OpenAI token usage (~$5–50 / month typical)
+
+![Learned rules panel — team standards captured from PR history](docs/screenshots/02-learned-rules-panel.png)
 
 ---
 
@@ -78,7 +84,7 @@ jobs:
       - task: PrReviewLearning@1
         inputs:
           mode: review
-          reviewMode: full       # full | rules-only | list-only | disabled
+          reviewMode: full       # full | rules-only | disabled
           maxComments: '20'
           minConfidence: '0.5'
           dryRun: false
@@ -122,7 +128,7 @@ jobs:
 | Input | Default | Description |
 |---|---|---|
 | `mode` | — | **Required.** `review` — review a new PR. `ingest` — learn rules from a merged PR. |
-| `reviewMode` | `full` | `full` — AI general + rules. `rules-only` — matched rules only (cheaper). `list-only` — no AI, just posts which rules apply. `disabled` — skip review. |
+| `reviewMode` | `full` | `full` — AI general + rules. `rules-only` — matched rules only (cheaper). `disabled` — skip review. |
 | `maxComments` | `20` | Hard cap on comments posted per run. |
 | `minConfidence` | `0.5` | Rules below this threshold are ignored. |
 | `dryRun` | `false` | Log findings to build output instead of posting to the PR. |
@@ -146,7 +152,7 @@ If a reviewer writes a comment containing `#best-practice`, the ingest task clas
 
 **AISRE Labs never sees your code, your diffs, or your PR comments.** The pipeline task runs as a standard Azure Pipelines job authenticated by `$(System.AccessToken)`. All network calls go to `dev.azure.com/{your-org}/…` and `{your-resource}.openai.azure.com/…`.
 
-Full details: [aisre-labs.github.io/pr-review/privacy](https://aisre-labs.github.io/pr-review/privacy/)
+Full details: [aisre-labs.github.io/pr-review/privacy](https://aisre-labs.github.io/pr-review/privacy)
 
 ---
 
