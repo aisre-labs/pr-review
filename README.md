@@ -67,59 +67,113 @@ That's it. No servers to operate, no data leaving your Azure tenant.
 
 ## Pipeline setup
 
-### PR validation pipeline (review mode)
+### 1. Review pipeline — runs on every PR
+
+Save as `ai-review-pipeline.yml` in your repo root, register it as a pipeline in Azure DevOps, then set it as a **Branch Policy → Build Validation** on `main` (set as **Optional** to give feedback without blocking merge):
 
 ```yaml
 trigger: none
 
 pr:
   branches:
-    include: [main, develop]
+    include: [main]
+  paths:
+    exclude:
+      - '**/*.md'
+      - docs/*
+
+pool:
+  vmImage: 'ubuntu-latest'
 
 jobs:
-  - job: AIReview
-    pool:
-      vmImage: ubuntu-latest
+  - job: Review
+    timeoutInMinutes: 5
     steps:
       - task: PrReviewLearning@1
         inputs:
           mode: review
-          reviewMode: full       # full | rules-only | disabled
-          maxComments: '20'
-          minConfidence: '0.5'
-          dryRun: false
 ```
 
-### Post-merge pipeline (ingest mode — learns new rules)
+### 2. Ingest pipeline — learns rules from merged PRs
+
+Save as `ai-ingest-pipeline.yml`. Run **manually** after merging a PR, passing the PR number as a parameter. The plugin will analyze the PR's resolved comments and capture them as rules for all future PRs:
 
 ```yaml
-trigger:
-  branches:
-    include: [main]
+trigger: none
+
+parameters:
+  - name: pullRequestId
+    displayName: 'Pull Request ID to ingest'
+    type: string
+    default: ''
+
+pool:
+  vmImage: 'ubuntu-latest'
 
 jobs:
   - job: IngestRules
-    pool:
-      vmImage: ubuntu-latest
+    timeoutInMinutes: 10
     steps:
+      - bash: |
+          echo "##vso[task.setvariable variable=System.PullRequest.PullRequestId]${{ parameters.pullRequestId }}"
+        condition: ne('${{ parameters.pullRequestId }}', '')
+
       - task: PrReviewLearning@1
         inputs:
           mode: ingest
 ```
 
-### Both in one pipeline (recommended for simplicity)
+**Why manual trigger?** ADO doesn't set `System.PullRequest.PullRequestId` on CI builds triggered by merge — only on PR builds. Running ingest manually with the PR number is the simplest way to control which PRs the plugin learns from. Run it right after merging a PR where a reviewer's comment should become a rule.
 
-```yaml
-- task: PrReviewLearning@1
-  inputs:
-    mode: review
-  condition: eq(variables['Build.Reason'], 'PullRequest')
+---
 
-- task: PrReviewLearning@1
-  inputs:
-    mode: ingest
-  condition: ne(variables['Build.Reason'], 'PullRequest')
-```
+## How to register the pipelines in Azure DevOps
+
+After saving the YAML files in your repo, each one needs to be registered as a pipeline in ADO:
+
+1. **Pipelines → New pipeline**
+2. **Azure Repos Git** → pick your repo
+3. **Existing Azure Pipelines YAML file** → select `/ai-review-pipeline.yml` (or `/ai-ingest-pipeline.yml`)
+4. **Save** (don't run yet)
+5. Optionally rename (three-dot menu → Rename), e.g. `myrepo-ai-review` and `myrepo-ai-ingest`
+
+### Set review pipeline as Branch Policy (one-time)
+
+So the review runs on every PR targeting `main`:
+
+1. **Project Settings → Repositories → [your repo] → Policies**
+2. Under **Branch Policies**, click on `main` (or your target branch)
+3. **Build Validation → Add**
+4. Build pipeline: select `myrepo-ai-review`
+5. Trigger: **Automatic**
+6. Policy requirement: **Optional** (recommended — AI review is advisory, not blocking). Pick **Required** only once you trust its precision.
+7. **Save**
+
+---
+
+## When does each mode actually run?
+
+### Review — automatic, every PR
+
+Once the Branch Policy is set up:
+
+- Dev opens a PR targeting the protected branch → **review pipeline triggers automatically**
+- AI analyzes the diff, applies learned rules, posts inline comments on the PR
+- Dev pushes new commits → pipeline re-runs; already-posted comments are not duplicated (idempotent by file+line+rule hash)
+- Nothing manual — set it once, forget it.
+
+### Ingest — manual, after merge
+
+The ingest pipeline requires a **pullRequestId parameter**, so it's run on demand:
+
+1. Reviewer leaves a comment on a PR (optionally tagged `#best-practice` to skip AI classification and make it a rule immediately)
+2. Author fixes and merges the PR → note the PR number (e.g. `#42`)
+3. In ADO: **Pipelines → `myrepo-ai-ingest` → Run pipeline**
+4. In the "Run pipeline" dialog, paste the PR number into **Pull Request ID to ingest**
+5. **Run**
+6. Plugin analyzes the PR's resolved comments and captures them as rules; from the next PR onwards, those rules apply automatically
+
+**Not every merge needs an ingest run** — only the ones where a reviewer caught something worth remembering as a rule.
 
 ---
 
@@ -138,6 +192,48 @@ jobs:
 ## The `#best-practice` tag
 
 If a reviewer writes a comment containing `#best-practice`, the ingest task classifies it as **immediately addressable** — no AI resolution analysis needed. The rule is extracted directly from the comment text and stored with full confidence. This is the fastest path from "we agreed on something in a PR" to "it's automatically enforced on the next PR".
+
+---
+
+## Project Groups — scope rules across related repos
+
+By default, a rule learned in one repository applies **only to that repository**. If your team works across multiple repos that share conventions, you can group them so a rule learned in one applies to all.
+
+### When do you need it?
+
+- You have microservices split across multiple repos that share coding standards (`payment-api`, `payment-worker`, `payment-gateway`)
+- A reviewer notes *"we always use HikariCP for DB pooling"* in one of them — without project groups, this rule applies only to that one repo. With a `payments` group, it applies to all three.
+- Not needed if you have one repo or each repo has different standards.
+
+### How to configure
+
+1. In ADO: **Project Settings → AI Code Reviewer → Project groups**
+2. Click **+ New group**
+3. Fill in:
+   - **Name** — e.g. `payment-services`
+   - **Description** (optional) — e.g. *"All services for the payments domain"*
+   - **Repositories** (one per line, format `org/project/repo`):
+     ```
+     myorg/MyProject/payment-api
+     myorg/MyProject/payment-worker
+     myorg/MyProject/payment-gateway
+     ```
+4. **Save**
+
+From the next ingest run onwards, the AI classifier sees your groups and can scope a rule to a group instead of just one repo. Add a new repo to the group later → all group-scoped rules apply to it automatically, no re-ingest needed.
+
+### Scope hierarchy
+
+The AI picks the **narrowest** scope that fits each rule:
+
+| Scope | Matches | Example pattern |
+|---|---|---|
+| `DIRECTORY` | Files matching a glob | `**/*Repository.java` |
+| `PROJECT` | One specific repo | `myorg/myproj/payment-api` |
+| `PROJECT_GROUP` | Group of repos (you config) | `payment-services` |
+| `LANGUAGE` | Any file of that language | `java`, `typescript` |
+
+You can edit any rule's scope later in the **Learned Rules** tab if AI classified it too narrow or too broad.
 
 ---
 
