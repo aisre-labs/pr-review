@@ -17,7 +17,7 @@ title: Privacy Policy — AI PR Review + Rule Learning
 This Privacy Policy applies to the **AI PR Review + Rule Learning** extension for Azure DevOps ("Extension") and related services published by **AISRE** ("we", "us", "our").
 
 **Contact:**  
-E-mail: [privacy@aisre.dev](mailto:privacy@aisre.dev)  
+E-mail: [privacy@aisre-labs.dev](mailto:privacy@aisre-labs.dev)  
 Support: [github.com/aisre-labs/pr-review/issues](https://github.com/aisre-labs/pr-review/issues)
 
 ---
@@ -107,7 +107,7 @@ If you are located in the EU, you have the right to:
 - **Portability** (Art. 20) — receive your data in machine-readable format  
 - **Object** (Art. 21) — object to processing based on legitimate interest  
 
-To exercise these rights, contact [privacy@aisre.dev](mailto:privacy@aisre.dev). We will respond within **30 calendar days**.
+To exercise these rights, contact [privacy@aisre-labs.dev](mailto:privacy@aisre-labs.dev). We will respond within **30 calendar days**.
 
 You also have the right to lodge a complaint with the Polish data protection authority:  
 **UODO** (Urząd Ochrony Danych Osobowych) — [uodo.gov.pl](https://uodo.gov.pl)
@@ -152,7 +152,7 @@ The following acts are strictly prohibited without prior written authorization f
 
 Use of the Extension is governed by the **AISRE Proprietary Software License** distributed with the Extension. Violation of these terms may result in civil and criminal liability under applicable Polish and international copyright law.
 
-For licensing inquiries: [license@aisre.dev](mailto:license@aisre.dev)
+For licensing inquiries: [license@aisre-labs.dev](mailto:license@aisre-labs.dev)
 
 ---
 

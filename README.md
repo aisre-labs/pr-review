@@ -164,7 +164,7 @@ Full details: [aisre-labs.github.io/pr-review/privacy](https://aisre-labs.github
 ## Support & feedback
 
 - **Bug reports / feature requests:** [GitHub Issues](https://github.com/aisre-labs/pr-review/issues)
-- **Security vulnerabilities:** privacy@aisre.dev (do not open a public issue)
+- **Security vulnerabilities:** privacy@aisre-labs.dev (do not open a public issue)
 
 ---
 
