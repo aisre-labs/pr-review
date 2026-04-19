@@ -40,8 +40,11 @@ That's it. No servers to operate, no data leaving your Azure tenant.
 - **`#best-practice` shortcut** — tag any comment to immediately create a rule, without waiting for the AI to classify it
 - **Project groups** — one rule can apply across a set of related repositories (e.g. all payment-service repos)
 - **Three review modes** — full AI review, rule-based only, or disabled — choose per pipeline
-- **Three learning modes** — tagged-only (compliance), conversation (balanced), all (maximum recall)
+- **Four learning modes** — strict (default), tagged-only, conversation, all
+- **Rule approval workflow** — non-tagged rules require admin approval in Hub before affecting PRs
 - **Rule provenance & audit log** — every rule shows its source PR comments and full change history
+- **Feedback-loop protection** — ingest skips AI-posted comments to prevent self-learning
+- **API key encrypted at rest** — AES-GCM with per-organization key
 - **Your data, your tenant** — BYOK Azure OpenAI, storage in ADO Extension Data Service, zero external dependencies
 - **Free** — you pay only for your own Azure OpenAI token usage (~$5–50 / month typical)
 
