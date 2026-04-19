@@ -100,16 +100,22 @@ jobs:
           mode: review
 ```
 
-### 2. Ingest pipeline — learns rules from merged PRs
+### 2. Ingest pipeline — auto-runs on merge
 
-Save as `ai-ingest-pipeline.yml`. Run **manually** after merging a PR, passing the PR number as a parameter. The plugin will analyze the PR's resolved comments and capture them as rules for all future PRs:
+Save as `ai-ingest-pipeline.yml`. Auto-triggers on every merge to your target branch. Extracts the PR number from the merge commit message (`Merged PR N: Title`, ADO's default format for merge-completion) and runs ingest automatically. This captures `#best-practice` tagged rules AND updates Accepted/Rejected metrics on existing rules based on each bot-comment's final thread status:
 
 ```yaml
-trigger: none
+trigger:
+  branches:
+    include: [main]
+  paths:
+    exclude:
+      - '**/*.md'
+      - docs/*
 
 parameters:
   - name: pullRequestId
-    displayName: 'Pull Request ID to ingest'
+    displayName: 'Pull Request ID (leave empty for auto-detect from merge commit)'
     type: string
     default: ''
 
@@ -121,15 +127,23 @@ jobs:
     timeoutInMinutes: 10
     steps:
       - bash: |
-          echo "##vso[task.setvariable variable=System.PullRequest.PullRequestId]${{ parameters.pullRequestId }}"
-        condition: ne('${{ parameters.pullRequestId }}', '')
+          PR_ID='${{ parameters.pullRequestId }}'
+          if [ -z "$PR_ID" ]; then
+            PR_ID=$(echo "$BUILD_SOURCEVERSIONMESSAGE" | grep -oE 'Merged PR [0-9]+' | grep -oE '[0-9]+' | head -1)
+          fi
+          if [ -z "$PR_ID" ]; then
+            echo "No PR ID — skipping (not a standard merge commit)."
+            exit 0
+          fi
+          echo "##vso[task.setvariable variable=System.PullRequest.PullRequestId]$PR_ID"
+          echo "Ingesting PR #$PR_ID"
 
       - task: PrReviewLearning@1
         inputs:
           mode: ingest
 ```
 
-**Why manual trigger?** ADO doesn't set `System.PullRequest.PullRequestId` on CI builds triggered by merge — only on PR builds. Running ingest manually with the PR number is the simplest way to control which PRs the plugin learns from. Run it right after merging a PR where a reviewer's comment should become a rule.
+**Compatibility:** works with ADO's default "Merge (no fast-forward)" completion option. Squash and rebase merges skip (no PR ref in commit). Manual `pullRequestId` param always works — use it to re-ingest historical PRs or bootstrap rules from pre-extension PR history.
 
 ---
 
@@ -168,18 +182,18 @@ Once the Branch Policy is set up:
 - Dev pushes new commits → pipeline re-runs; already-posted comments are not duplicated (idempotent by file+line+rule hash)
 - Nothing manual — set it once, forget it.
 
-### Ingest — manual, after merge
+### Ingest — automatic, at merge time
 
-The ingest pipeline requires a **pullRequestId parameter**, so it's run on demand:
+With the YAML above, ingest triggers automatically on every merge:
 
-1. Reviewer leaves a comment on a PR (optionally tagged `#best-practice` to skip AI classification and make it a rule immediately)
-2. Author fixes and merges the PR → note the PR number (e.g. `#42`)
-3. In ADO: **Pipelines → `myrepo-ai-ingest` → Run pipeline**
-4. In the "Run pipeline" dialog, paste the PR number into **Pull Request ID to ingest**
-5. **Run**
-6. Plugin analyzes the PR's resolved comments and captures them as rules; from the next PR onwards, those rules apply automatically
+1. Reviewer leaves a comment on a PR (optionally tagged `#best-practice` to make it a rule immediately, or untagged — strict mode gates learning on Resolved + commit-touched)
+2. Author fixes, merges the PR — ADO creates `Merged PR N: Title` commit on `main`
+3. **CI trigger fires automatically**
+4. Bash step extracts PR #N from commit message
+5. Task runs ingest: captures `#best-practice` rules, updates Accepted/Rejected metrics based on bot-comment thread statuses
+6. Done — no human action
 
-**Not every merge needs an ingest run** — only the ones where a reviewer caught something worth remembering as a rule.
+Manual re-ingest: use **Pipelines → ai-ingest → Run pipeline** with `pullRequestId` param to bootstrap from historical PRs or after scope changes.
 
 ---
 
