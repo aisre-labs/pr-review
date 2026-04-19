@@ -255,15 +255,20 @@ You can edit any rule's scope later in the **Learned Rules** tab if AI classifie
 
 ### Learning mode — control which comments become rules
 
-Set in **Project Settings → AI Code Reviewer → Azure OpenAI → Learning mode**. Three strictness levels:
+Set in **Project Settings → AI Code Reviewer → Azure OpenAI → Learning mode**. Four strictness levels:
 
-| Mode | What becomes a rule | Recommended for |
-|---|---|---|
-| **Tagged-only** | Only comments explicitly tagged `#best-practice` | Enterprise, compliance — zero AI guessing |
-| **Conversation** | Tagged + threads where reviewer and dev actually discussed | Mid-market — balanced |
-| **All** *(default)* | Tagged + conversation + diff-heuristic for silent threads | Small teams — maximum recall |
+| Mode | What becomes a rule | Non-tagged rule scope | Recommended for |
+|---|---|---|---|
+| **Strict** *(default)* | Tagged + threads marked **Resolved** AND where a commit changed the commented line | Forced `PROJECT` | Everyone — safest |
+| **Tagged-only** | Only `#best-practice` / `#best-global-practice` tagged | n/a | Maximum precision |
+| **Conversation** | Strict + AI analyzes replies to classify intent | Forced `PROJECT` | Higher recall, some AI risk |
+| **All** | Tagged + AI replies + diff-heuristic without Resolved gate | AI-picked (any scope) | Legacy — accepts false positives |
 
-For enterprise, use **Tagged-only** — every rule then has an explicit, human-authorized origin.
+Default is **Strict**. Non-tagged rules require both explicit human signals:
+1. Thread marked Resolved in PR UI
+2. Commit actually changed the commented line
+
+Non-tagged rules are always `PROJECT` scope — they can't accidentally become cross-repo policies. To make a global rule, use `#best-global-practice` tag explicitly.
 
 ### Rule provenance — click Details to see source PRs
 
