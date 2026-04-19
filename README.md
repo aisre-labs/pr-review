@@ -42,6 +42,7 @@ That's it. No servers to operate, no data leaving your Azure tenant.
 - **Three review modes** — full AI review, rule-based only, or disabled — choose per pipeline
 - **Four learning modes** — strict (default), tagged-only, conversation, all
 - **Rule approval workflow** — non-tagged rules require admin approval in Hub before affecting PRs
+- **Rule usage metrics** — triggered / posted / accepted / rejected counters with effectiveness score
 - **Rule provenance & audit log** — every rule shows its source PR comments and full change history
 - **Feedback-loop protection** — ingest skips AI-posted comments to prevent self-learning
 - **API key encrypted at rest** — AES-GCM with per-organization key
