@@ -169,6 +169,18 @@ So the review runs on every PR targeting `main`:
 6. Policy requirement: **Optional** (recommended — AI review is advisory, not blocking). Pick **Required** only once you trust its precision.
 7. **Save**
 
+### Grant Build Service permission to post PR comments (one-time, per repo)
+
+The pipeline uses `$(System.AccessToken)` — ADO's Build Service identity — to post comments. **This identity needs explicit permission.** Without it, pipeline runs cleanly but no comments appear and the log shows `403 Forbidden — TF401027: PullRequestContribute`.
+
+1. **Project Settings → Repositories → [your repo] → Security**
+2. Find the identity **`<project> Build Service (<org>)`** (e.g. `aisre-services Build Service (aisre-org)`)
+3. Set **`Contribute to pull requests`** → **Allow**
+4. Optionally also set **`Contribute`** → **Allow**
+5. Change saves automatically — no button needed
+
+Repeat per repo where you want AI review to post.
+
 ---
 
 ## When does each mode actually run?
@@ -331,6 +343,65 @@ Full details: [aisre-labs.github.io/pr-review/privacy](https://aisre-labs.github
 | Extension Data Service (rule storage) | — | **Free** (built into ADO) |
 | Pipeline minutes | You | Covered by ADO free tier for most orgs |
 | Azure OpenAI tokens | You | $5–50 / month for ~100 PRs/month (`gpt-4o-mini`) |
+
+---
+
+## Troubleshooting / FAQ
+
+### Pipeline runs but no comments appear on the PR — log shows `403 Forbidden — TF401027: PullRequestContribute`
+
+Full error:
+```
+ADO postThread failed: 403 Forbidden — TF401027: You need the Git 'PullRequestContribute'
+permission to perform this action. Details: identity 'Build\<guid>', scope 'repository'.
+```
+
+**Cause:** The pipeline posts comments using `$(System.AccessToken)`, which maps to your project's Build Service identity. By default, this identity does NOT have permission to comment on pull requests. You need to grant it once per repo.
+
+**Fix:**
+1. **Project Settings → Repositories → [your repo] → Security**
+2. Find **`<project> Build Service (<org>)`** in the identity list (e.g. `aisre-services Build Service (aisre-org)`)
+3. Set **`Contribute to pull requests`** → **Allow**
+4. Optionally also **`Contribute`** → Allow
+5. Change saves automatically — retry the pipeline (empty commit push or manual run)
+
+### Pipeline log shows old extension version even after updating in `Installed Extensions`
+
+If the pipeline log shows an older `[pr-review] extension v0.1.X` than what `Installed Extensions` reports, ADO's task cache can serve a stale bundle until the next task version bump. Force a refresh:
+
+1. **Organization Settings → Extensions → Installed → AI Code Reviewer → Uninstall**
+2. **Shared** tab → **AI Code Reviewer → Install**
+
+Uninstall does NOT delete your Extension Data Service (rules, config, metrics, audit log persist). It only clears the bundled task code cache.
+
+### Ingest doesn't auto-run after merge
+
+`ai-ingest-pipeline.yml` auto-triggers on master pushes AND extracts the PR number from the merge commit message (format `Merged PR N: Title`). Two common reasons it doesn't fire:
+
+- **ADO Pipeline not registered** — every YAML in the repo must be saved as a pipeline (Pipelines → New pipeline → Existing YAML) before ADO watches it for triggers.
+- **Non-standard complete option** — if your PR was completed with Squash or Rebase, the commit message doesn't contain `Merged PR N`. The pipeline skips silently. Either switch the PR complete option to **Merge (no fast-forward)**, or run ingest manually with the `pullRequestId` parameter.
+
+### Rule usage counters stay at 0 even though comments are being posted
+
+Counters live in Extension Data Service and are bumped by the task. Checklist:
+
+1. Review pipeline is actually running (check its log history)
+2. Log shows `matched=N ruleCitations=M` at end (new format) — not just `files=X batches=Y posted=Z`. If old format, see stale extension issue above.
+3. For Accepted/Rejected specifically: they only update when the **ingest** pipeline runs on a merged PR. If you only see Triggered/Posted updating but never Accepted/Rejected, your ingest pipeline is not auto-triggering (see above).
+
+### AI posts inconsistent number of comments across re-runs of the same PR
+
+`temperature=0` with a stable seed makes output ~deterministic, but Azure OpenAI's determinism is best-effort. Small variance (0 or 1 extra comment) is possible, especially if the model's `system_fingerprint` changes between runs. Empirically: >90% of re-runs on the exact same PR produce identical output.
+
+For true "same PR = same output" guarantee, Azure OpenAI does not currently offer a stronger contract than seed.
+
+### Rule applied across projects flags borderline cases
+
+This is the known recall/precision tradeoff with `#best-global-practice` tags. The rule matches any file of the given LANGUAGE — context-specific exceptions (e.g. a derived Spring Data query that's naturally bounded) still get flagged. Options:
+
+- Click **Won't Fix** on the individual comment — bumps `Rejected` counter on that rule (rule admin can then decide whether to deactivate)
+- Click **Closed (By Design)** — also counts as rejection under current implementation (same effect)
+- Edit the rule text in Hub to include explicit exclusions
 
 ---
 
